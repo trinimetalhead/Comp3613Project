@@ -18,10 +18,12 @@
 | Command | Description |
 |---------|-------------|
 | `flask student create` | Create a new student (interactive: enter name + email) |
+| `flask student hours` | View total hours (enter student ID) |
 | `flask student requestHours` | Request hour confirmation (enter student ID + hours) |
 | `flask student viewmyRequests` | List all requests made by a student (enter student ID) |
 | `flask student viewmyAccolades` | List all accolades earned by a student (enter student ID) |
 | `flask student viewLeaderboard` | View leaderboard of students ranked by approved hours |
+
 
 ---
 

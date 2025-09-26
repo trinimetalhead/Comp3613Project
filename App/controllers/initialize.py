@@ -17,6 +17,8 @@ def initialize():
         Student(name='Charlie', email='charlie.brown@gmail.com'),
         Student(name='Diana', email='diana.lee@hotmail.com'),
         Student(name='Eve', email='eve.patel@gmail.com'),
+        Student(name='Frank', email='frank.miller@gmail.com'),
+        Student(name='Grace', email='grace.wilson@hotmail.com'),
     ]
     db.session.add_all(students)
     db.session.commit()
@@ -26,8 +28,7 @@ def initialize():
         Staff(name='Mr. Smith', email='mr.smith@gmail.com'),
         Staff(name='Ms. Johnson', email='ms.johnson@hotmail.com'),
         Staff(name='Mr. Lee', email='mr.lee@gmail.com'),
-        Staff(name='Ms. Patel', email='ms.patel@hotmail.com'),
-        Staff(name='Mr. Brown', email='mr.brown@gmail.com'),
+        
     ]
     for staff_member in staff_members:
         db.session.add(staff_member)

@@ -102,6 +102,20 @@ def listloggedHours():
 
 student_cli = AppGroup('student', help='Student object commands')
 
+@student_cli.command("hours", help="View total approved hours for a student")
+
+def hours ():
+    print("\n")
+    student_id = int(input("Enter your student ID: "))
+
+    student = Student.query.get(student_id)
+    if not student:
+        print(f"Student with id {student_id} not found.")
+        return
+    total_hours = sum(lh.hours for lh in student.loggedhours if lh.status == 'approved')
+    print(f"Total approved hours for {student.name}: {total_hours}")
+    print("\n")
+
 @student_cli.command("create", help="Create a new student")
 def create_student():
     print("\n")
@@ -110,6 +124,8 @@ def create_student():
     student = Student.create_student(name, email)
     print(f"Created student: {student}")
     print("\n")
+
+
 
 
 #Command for student to request hour confirmation (student_id, hours)
@@ -148,7 +164,6 @@ def viewmyRequests():
 
 #command to list all accolades for a specific student (student_id)
 @student_cli.command("viewmyAccolades", help="List all accolades for a student")
-
 def viewmyAccolades():
     print("\n")
     student_id = int(input("Enter your student ID: "))
