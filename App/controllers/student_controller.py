@@ -55,3 +55,13 @@ def get_all_students_json():
     students = Student.query.all()
     return [student.get_json() for student in students]
 
+
+def fetch_activity_history(student_id):
+    """Return a student's activity history as a list of dicts (most recent first).
+    """
+    student = Student.query.get(student_id)
+    if not student:
+        raise ValueError(f"Student with id {student_id} not found.")
+
+    return student.get_activity_history()
+
