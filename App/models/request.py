@@ -1,7 +1,9 @@
 from App.database import db
 from datetime import datetime
+from .observer import Subject
 
-class Request(db.Model):
+
+class Request(db.Model, Subject):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student.student_id'), nullable=False)
     hours = db.Column(db.Float, nullable=False)
@@ -9,6 +11,8 @@ class Request(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __init__(self, student_id, hours, status='pending'):
+        Subject.__init__(self)
+        # db.Model __init__ is managed by SQLAlchemy; set fields explicitly
         self.student_id = student_id
         self.hours = hours
         self.status = status
@@ -25,3 +29,14 @@ class Request(db.Model):
             'status': self.status,
             'timestamp': self.timestamp.isoformat()
         }
+    
+    # Encapsulated notification methods
+    def notify_created(self):
+        """Encapsulated notification for request creation"""
+        self.notify('request_created')
+
+    def notify_denied(self):
+        """Encapsulated notification for request denial"""
+        self.notify('request_denied')
+    
+    # Notification is handled by observers via Subject.notify(event_type)
