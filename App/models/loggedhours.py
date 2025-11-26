@@ -1,7 +1,9 @@
 from App.database import db
 from datetime import datetime
+from .observer import Subject
 
-class LoggedHours(db.Model):
+
+class LoggedHours(db.Model, Subject):
 
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student.student_id'), nullable=False)
@@ -11,6 +13,8 @@ class LoggedHours(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __init__(self, student_id, staff_id, hours, status='approved'):
+        Subject.__init__(self)
+        # db.Model __init__ is managed by SQLAlchemy; set fields explicitly
         self.student_id = student_id
         self.staff_id = staff_id
         self.hours = hours
@@ -28,3 +32,8 @@ class LoggedHours(db.Model):
             'status': self.status,
             'timestamp': self.timestamp.isoformat()
         }
+    
+    # Encapsulated notification method
+    def notify_approved(self):
+        """Encapsulated notification for hours approval"""
+        self.notify('hours_logged')

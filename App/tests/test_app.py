@@ -3,12 +3,11 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from App.main import create_app
 from App.database import db, create_db
-from App.models import User, Student, Request, Staff, LoggedHours, ActivityLog, ActivityObserver
+from App.models import User, Student, Request, Staff, LoggedHours
 from App.models import User
 from App.models import Staff
 from App.models import Student
 from App.models import Request
-from App.models import ActivityLog, ActivityObserver
 from App.controllers import (
     create_user,
     get_all_users_json,
@@ -23,8 +22,7 @@ from App.controllers.student_controller import (
     fetch_requests,
     get_approved_hours,
     fetch_accolades,
-    generate_leaderboard,
-    fetch_activity_history
+    generate_leaderboard
 )
 from App.controllers.staff_controller import (
     register_staff,
@@ -141,76 +139,13 @@ class LoggedHoursUnitTests(unittest.TestCase):
         self.assertIn("1", rep)
         self.assertIn("2", rep)
         self.assertIn("20", rep)
-
-class ActivityLogUnitTests(unittest.TestCase):
-    
-    def test_init_activity_log(self):
-        log = ActivityLog(student_id=1, category='hours', detail='Logged 5 hours')
-        self.assertEqual(log.student_id, 1)
-        self.assertEqual(log.category, 'hours')
-        self.assertEqual(log.detail, 'Logged 5 hours')
-    
-    def test_activity_log_to_dict(self):
-        log = ActivityLog(student_id=2, category='milestone', detail='10 Hours Milestone')
-        log_dict = log.to_dict()
-        self.assertEqual(log_dict['student_id'], 2)
-        self.assertEqual(log_dict['category'], 'milestone')
-        self.assertEqual(log_dict['detail'], '10 Hours Milestone')
-        self.assertIn('created_at', log_dict)
-
-class ActivityObserverUnitTests(unittest.TestCase):
-    
-    def test_observer_creation(self):
-        observer = ActivityObserver()
-        self.assertIsNotNone(observer)
-
-class UserControllerErrorTests(unittest.TestCase):
-    
-    def setUp(self):
-        self.app = create_app()
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()  
         
-        self.existing_user = create_user("Alice", "password123", "alice@example.com")
 
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
 
-    def test_create_user_duplicate(self):
-        print("Running duplicate user test!")
-        with self.assertRaises(Exception) as context:
-            create_user("Alice2", "newpassword", "alice@example.com")
-        self.assertIn("already exists", str(context.exception))
-
-    def test_login_wrong_password(self):
-        create_user("Bob", "correctpass", "bob@example.com")
-
-        try:
-            result = login("Bob", "wrongpass")  
-        except Exception as e:
-        
-           self.assertIn("invalid", str(e).lower())
-        return
-        self.assertFalse(result, f"Expected login to fail for wrong password but got: {result}")
     
-    def test_get_user_invalid_id(self):
-   
-      with self.assertRaises(Exception) as context:
-        get_user(999)  
-      self.assertIn("user does not exist", str(context.exception))
 
-    def test_get_user_by_username_invalid(self):
-        with self.assertRaises(Exception) as context:
-           get_user_by_username("nope_user")
-        self.assertIn("user not found", str(context.exception))
 
-    def test_update_nonexistent_user(self):
-        with self.assertRaises(Exception) as context:
-            update_user(999, "newname")  
-        self.assertIn("user does not exist", str(context.exception))
+
 
 
 
@@ -228,32 +163,13 @@ def empty_db():
 
 class StaffIntegrationTests(unittest.TestCase):
 
-    def setUp(self):
-        from App.main import create_app
-        from App.database import db
-        self.app = create_app({'TESTING': True, 'SQLALCHEMY_DATABASE_URI': 'sqlite:///:memory:'})
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-    def tearDown(self):
-        from App.database import db
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
-
     def test_create_staff(self):
-        from App.controllers.staff_controller import register_staff
-        from App.models.staff import Staff
-        from App.database import db
+        staff = register_staff("marcus", "marcus@example.com", "pass123")
+        assert staff.username == "marcus"
+        # ensure staff persisted
+        fetched = Staff.query.get(staff.staff_id)
+        assert fetched is not None
 
-        with self.app.app_context():
-            staff = register_staff("marcus", "marcus@example.com", "pass123")
-            self.assertEqual(staff.username, "marcus")
-
-            fetched = Staff.query.get(staff.staff_id)
-            self.assertIsNotNone(fetched)
-        
     def test_request_fetch(self):
         # create a student and a pending request
         student = Student.create_student("tariq", "tariq@example.com", "studpass")
@@ -294,19 +210,6 @@ class StaffIntegrationTests(unittest.TestCase):
 
 
 class StudentIntegrationTests(unittest.TestCase):
-    def setUp(self):
-        from App.main import create_app
-        from App.database import db
-        self.app = create_app()
-        self.app_context = self.app.app_context()
-        self.app_context.push()
-        db.create_all()
-
-    def tearDown(self):
-        from App.database import db
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
 
     def test_create_student(self):
         student = register_student("junior", "junior@example.com", "studpass")
@@ -366,64 +269,3 @@ class StudentIntegrationTests(unittest.TestCase):
         assert 'zara' in names and 'omar' in names and 'leon' in names
         # assert relative ordering: zara (10) > omar (5) > leon (1)
         assert names.index('zara') < names.index('omar') < names.index('leon')
-
-    def test_activity_history_after_approval(self):
-        """Test that approving a request creates ActivityLog entries and student can fetch history."""
-        # Create staff and student
-        staff = register_staff("prof_jane", "jane@example.com", "staffpass")
-        student = Student.create_student("kyle", "kyle@example.com", "studpass")
-        
-        # Create and approve a request
-        req = Request(student_id=student.student_id, hours=5.0, status='pending')
-        db.session.add(req)
-        db.session.commit()
-        
-        # Approve the request (this triggers observer and ActivityLog creation)
-        result = process_request_approval(staff.staff_id, req.id)
-        assert result['logged_hours'] is not None
-        
-        # Fetch activity history for the student
-        history = fetch_activity_history(student.student_id)
-        
-        # Verify history contains the approved hours entry
-        assert len(history) > 0
-        # At least one entry should be 'hours' category
-        categories = [h['category'] for h in history]
-        assert 'hours' in categories
-        # Verify detail mentions the hours amount
-        details = [h['detail'] for h in history]
-        assert any('5.0' in detail for detail in details)
-
-    def test_activity_history_milestone_tracking(self):
-        """Test that milestones are automatically logged when thresholds are reached."""
-        # Create staff and student
-        staff = register_staff("prof_mark", "mark@example.com", "staffpass")
-        student = Student.create_student("sierra", "sierra@example.com", "studpass")
-        
-        # Create requests totaling 10+ hours to trigger milestone
-        req1 = Request(student_id=student.student_id, hours=6.0, status='pending')
-        req2 = Request(student_id=student.student_id, hours=5.0, status='pending')
-        db.session.add_all([req1, req2])
-        db.session.commit()
-        
-        # Approve first request
-        result1 = process_request_approval(staff.staff_id, req1.id)
-        assert result1['logged_hours'] is not None
-        
-        # Approve second request (should trigger milestone)
-        result2 = process_request_approval(staff.staff_id, req2.id)
-        assert result2['logged_hours'] is not None
-        
-        # Fetch activity history
-        history = fetch_activity_history(student.student_id)
-        
-        # Verify both hours entries and milestone entry exist
-        assert len(history) >= 3  # 2 hours entries + at least 1 milestone
-        categories = [h['category'] for h in history]
-        assert 'hours' in categories
-        assert 'milestone' in categories
-        
-        # Verify milestone detail
-        milestone_details = [h['detail'] for h in history if h['category'] == 'milestone']
-        assert any('10 Hours Milestone' in detail for detail in milestone_details)
-

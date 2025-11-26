@@ -1,28 +1,25 @@
 from App.database import db
 from .user import User
+from .observer import Subject
 
-class Student(User):
+
+class Student(User, Subject):
 
     __tablename__ = "student"
     student_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), primary_key=True)
     
-    # relationship to LoggedHours and Request both One-to-Many
+    #relationship to LoggedHours and Request both One-to-Many
     loggedhours = db.relationship('LoggedHours', backref='student', lazy=True, cascade="all, delete-orphan")
     requests = db.relationship('Request', backref='student', lazy=True, cascade="all, delete-orphan")
 
-    # Activity logs relationship (persistent history)
-    activity_logs = db.relationship('ActivityLog', backref='student', lazy=True)
-
-    # Inheritance setup
+    #Inheritance setup
     __mapper_args__ = {
         "polymorphic_identity": "student"
     }
-
-    # calls parent constructor
+    #calls parent constructor
     def __init__(self, username, email, password):
-       super().__init__(username, email, password, role="student")
-       # runtime-only observers list (not persisted)
-       self._observers = []
+        Subject.__init__(self)
+        super().__init__(username, email, password, role="student")
 
     def __repr__(self):
         return f"[Student ID= {str(self.student_id):<3}  Name= {self.username:<10} Email= {self.email}]"
@@ -47,6 +44,10 @@ class Student(User):
         request = Request(student_id=self.student_id, hours=hours, status='pending')
         db.session.add(request)
         db.session.commit()
+
+        # Encapsulated notification
+        request.notify_created()
+
         return request
     
     # Method to calculate total approved hours and accolades
@@ -62,27 +63,22 @@ class Student(User):
             accolades.append('50 Hours Milestone')
         return accolades
 
-    # Observer API (Subject)
-    def register_observer(self, observer):
-        if not hasattr(self, '_observers'):
-            self._observers = []
-        if observer not in self._observers:
-            self._observers.append(observer)
-
-    def unregister_observer(self, observer):
-        if hasattr(self, '_observers') and observer in self._observers:
-            self._observers.remove(observer)
-
-    def notify_observers(self, event_type, payload=None):
-        payload = payload or {}
-        for obs in list(getattr(self, '_observers', [])):
-            try:
-                obs.update(self, event_type, payload)
-            except Exception:
-                # keep notifications best-effort; real app should log the exception
-                pass
-
-    # Convenience: return activity history as dicts (most recent first)
-    def get_activity_history(self):
-        return [a.to_dict() for a in sorted(self.activity_logs, key=lambda x: x.created_at, reverse=True)]
+    def check_milestones(self, recent_logged=None):
+        """
+        Business logic to check if the student achieved a milestone.
+        If a recent_logged is provided, use it to determine whether a milestone
+        was just crossed and notify observers.
+        """
+        total_hours = sum(lh.hours for lh in self.loggedhours if lh.status == 'approved')
+        milestones = [10, 25, 50]
+        if recent_logged is not None:
+            previous_total = total_hours - recent_logged.hours
+            for m in milestones:
+                if total_hours >= m and previous_total < m:
+                    # Notify observers that a milestone was achieved
+                    self.notify('milestone_achieved', milestone=m, total_hours=total_hours, logged_hours_id=getattr(recent_logged, 'id', None))
+        else:
+            for m in milestones:
+                if total_hours >= m:
+                    self.notify('milestone_achieved', milestone=m, total_hours=total_hours)
 

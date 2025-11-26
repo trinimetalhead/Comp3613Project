@@ -1,4 +1,25 @@
 from App.database import db
+from App.models import Student
+
+
+def request_hours(student_id, hours):
+    """Controller: Resolve ID to object and delegate to model"""
+    student = db.session.get(Student, student_id)
+    if not student:
+        return None, "Student not found"
+    return student.request_hours_confirmation(hours), None
+
+
+def create_student(username, email, password):
+    """Controller: Create a new student and return it"""
+    # Basic uniqueness check
+    existing = db.session.query(Student).filter_by(username=username).first()
+    if existing:
+        return None, "User already exists"
+
+    student = Student.create_student(username, email, password)
+    return student, None
+from App.database import db
 from App.models import User,Staff,Student,Request
 
 def register_student(name,email,password):
@@ -54,14 +75,4 @@ def generate_leaderboard():
 def get_all_students_json():
     students = Student.query.all()
     return [student.get_json() for student in students]
-
-
-def fetch_activity_history(student_id):
-    """Return a student's activity history as a list of dicts (most recent first).
-    """
-    student = Student.query.get(student_id)
-    if not student:
-        raise ValueError(f"Student with id {student_id} not found.")
-
-    return student.get_activity_history()
 

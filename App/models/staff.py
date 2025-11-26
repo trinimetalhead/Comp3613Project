@@ -46,6 +46,10 @@ class Staff(User):
         logged = LoggedHours(student_id=request.student_id, staff_id=self.staff_id, hours=request.hours, status='approved')
         db.session.add(logged)
         db.session.commit()
+        
+        # Encapsulated notification for approved hours
+        logged.notify_approved()
+
         return logged
     
     #Method to deny a request
@@ -54,6 +58,8 @@ class Staff(User):
             return False
         request.status = 'denied'
         db.session.commit()
+        # Encapsulated notification for denied request
+        request.notify_denied()
         return True
     
     

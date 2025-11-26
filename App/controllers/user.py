@@ -2,27 +2,17 @@ from App.models import User,Request,LoggedHours
 from App.database import db
 
 def create_user(username, password, email):
-    
-    if User.query.filter_by(email=email).first():
-        raise Exception("User with this email already exists")
-    
-    newuser = User(username=username, password=password, email=email, role= "user")
+    newuser = User(username=username, password=password, email=email)
     db.session.add(newuser)
     db.session.commit()
     return newuser
 
 def get_user_by_username(username):
     result = db.session.execute(db.select(User).filter_by(username=username))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise Exception("user not found")  # ensures consistency with get_user
-    return user
+    return result.scalar_one_or_none()
 
-def get_user(user_id):
-    user = db.session.get(User, user_id)
-    if not user:
-        raise Exception("user does not exist")
-    return user
+def get_user(id):
+    return db.session.get(User, id)
 
 def get_all_users():
     return db.session.scalars(db.select(User)).all()
