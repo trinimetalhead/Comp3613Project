@@ -350,23 +350,13 @@ class StudentIntegrationTests(unittest.TestCase):
 '''
    Unit Edge Case Tests
 '''
-class EdgeCaseTests(unittest.TestCase):
-
+class StudentEdgeCaseTests(unittest.TestCase):
     #Duplicate Student Enteries
     def test_duplicate_student_creation(self):
         student1 = Student.create_student("alex", "alex@gmail.com", "alexpass")
         student2 = Student.create_student("alex", "alex@gmail.com", "alexpass")
         self.assertIsNotNone(student1)
         self.assertIsNone(student2)
-
-
-    #Duplicate Staff Enteries
-    def test_duplicate_staff_creation(self):
-        staff1 = Staff.create_staff("alexio","alexio@mail.com","alexiopass")
-        staff2 = Staff.create_staff("alexio","alexio@mail.com","alexiopass")
-        self.assertIsNotNone(staff1)
-        self.assertIsNone(staff2)
-
 
     #Empty Student Data
     def test_empty_student_creation(self):
@@ -376,6 +366,15 @@ class EdgeCaseTests(unittest.TestCase):
         self.assertIsNone(student1)
         self.assertIsNone(student2)
         self.assertIsNone(student3) 
+
+
+class StaffEdgeCaseTests(unittest.TestCase):
+    #Duplicate Staff Enteries
+    def test_duplicate_staff_creation(self):
+        staff1 = Staff.create_staff("alexio","alexio@mail.com","alexiopass")
+        staff2 = Staff.create_staff("alexio","alexio@mail.com","alexiopass")
+        self.assertIsNotNone(staff1)
+        self.assertIsNone(staff2)
 
 
     #Empty Staff Data
@@ -463,9 +462,6 @@ class EdgeCaseTests(unittest.TestCase):
             self.assertIn("Request with id", str(context.exception))
             process_request_denial(staff.staff_id, invalid_request_id)
             self.assertIn("request with id", str(context.exception))
-
-    
-
 
 
 '''    #Invalid Student ID for Request
