@@ -126,8 +126,9 @@ def requestHours():
         hours = float(input("Enter the number of hours to request: "))
     
         req = create_hours_request(student_id,hours)
-        print(f"Requested {hours} hours for confirmation.\n")
-        print(f"Request ID: {req.id}, Status: {req.status}")
+        if req:
+            print(f"Requested {hours} hours for confirmation.\n")
+            print(f"Request ID: {req.id}, Status: {req.status}")
 
     except ValueError as e:
         print(f"Error: {e}")

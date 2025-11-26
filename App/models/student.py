@@ -37,14 +37,14 @@ class Student(User):
     
     # Method to create a new student
     def create_student(username, email, password):
-
+        #non-empty input validation
         if not username or not username.strip():
             return print("Username cannot be empty")
         if not email or not email.strip():
             return print("Email cannot be empty")
         if not password or not password.strip():
             return print("Password cannot be empty")
-
+        #duplicate error handling
         try:
             newstudent = Student(username=username, email=email, password=password)
             db.session.add(newstudent)
@@ -57,11 +57,29 @@ class Student(User):
     # Method for student to request hours
     def request_hours_confirmation(self, hours):
         from App.models import Request
-        request = Request(student_id=self.student_id, hours=hours, status='pending')
-        db.session.add(request)
-        db.session.commit()
-        return request
-    
+        #Invalid Input handling
+        if hours is None or hours <= 0 :
+            return print("Requested hours must be non-NULL and greater than 0")
+
+        try: 
+            hours = float(hours)
+        except (TypeError,ValueError):
+            return print("Requested hours must be a number")
+        
+        #Invalid ID handling
+        if not self.student_id:
+            return print(f"Invalid Student ID <{self.student_id}>")
+        
+        try:
+            request = Request(student_id=self.student_id, hours=hours, status='pending')
+            db.session.add(request)
+            db.session.commit()
+            return request
+        except IntegrityError:
+            db.session.rollback()
+            return None
+
+
     # Method to calculate total approved hours and accolades
     def accolades(self):
         # Only count approved logged hours

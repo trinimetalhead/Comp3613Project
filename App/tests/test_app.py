@@ -358,7 +358,7 @@ class EdgeCaseTests(unittest.TestCase):
         student2 = Student.create_student("alex", "alex@gmail.com", "alexpass")
         self.assertIsNotNone(student1)
         self.assertIsNone(student2)
-        
+
     #Duplicate Staff Enteries
     def test_duplicate_staff_creation(self):
         staff1 = Staff.create_staff("alexio","alexio@mail.com","alexiopass")
@@ -384,3 +384,23 @@ class EdgeCaseTests(unittest.TestCase):
         self.assertIsNone(staff2)
         self.assertIsNone(staff3)
 
+    #Invalid Hours Requested
+    def test_invalid_hours_requested(self):
+        student = Student.create_student("sara", "sara@mail.com", "sarapass")
+        req1 = student.request_hours_confirmation(-5)
+        req2 = student.request_hours_confirmation(0)
+        #req3 = student.request_hours_confirmation("five")
+
+        self.assertIsNone(req1)
+        self.assertIsNone(req2)
+        #self.assertIsNone(req3)
+
+    #Invalid Student ID for Request
+'''    def test_invalid_student_id_request(self):
+        #student = Student.create_student("sara", "sara@mail.com", "sarapass")
+        req = Student.request_hours_confirmation(999, 5) #999 is an invalid ID
+        
+        self.assertIsNone(req)
+'''
+
+    
