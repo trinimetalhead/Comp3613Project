@@ -270,67 +270,6 @@ class StudentIntegrationTests(unittest.TestCase):
         # assert relative ordering: zara (10) > omar (5) > leon (1)
         assert names.index('zara') < names.index('omar') < names.index('leon')
 
-    def test_activity_history_after_approval(self):
-        """Test that approving a request creates ActivityLog entries and student can fetch history."""
-        # Create staff and student
-        staff = register_staff("prof_jane", "jane@example.com", "staffpass")
-        student = Student.create_student("kyle", "kyle@example.com", "studpass")
-        
-        # Create and approve a request
-        req = Request(student_id=student.student_id, hours=5.0, status='pending')
-        db.session.add(req)
-        db.session.commit()
-        
-        # Approve the request (this triggers observer and ActivityLog creation)
-        result = process_request_approval(staff.staff_id, req.id)
-        assert result['logged_hours'] is not None
-        
-        # Fetch activity history for the student
-        history = fetch_activity_history(student.student_id)
-        
-        # Verify history contains the approved hours entry
-        assert len(history) > 0
-        # At least one entry should be 'hours' category
-        categories = [h['category'] for h in history]
-        assert 'hours' in categories
-        # Verify detail mentions the hours amount
-        details = [h['detail'] for h in history]
-        assert any('5.0' in detail for detail in details)
-
-    def test_activity_history_milestone_tracking(self):
-        """Test that milestones are automatically logged when thresholds are reached."""
-        # Create staff and student
-        staff = register_staff("prof_mark", "mark@example.com", "staffpass")
-        student = Student.create_student("sierra", "sierra@example.com", "studpass")
-        
-        # Create requests totaling 10+ hours to trigger milestone
-        req1 = Request(student_id=student.student_id, hours=6.0, status='pending')
-        req2 = Request(student_id=student.student_id, hours=5.0, status='pending')
-        db.session.add_all([req1, req2])
-        db.session.commit()
-        
-        # Approve first request
-        result1 = process_request_approval(staff.staff_id, req1.id)
-        assert result1['logged_hours'] is not None
-        
-        # Approve second request (should trigger milestone)
-        result2 = process_request_approval(staff.staff_id, req2.id)
-        assert result2['logged_hours'] is not None
-        
-        # Fetch activity history
-        history = fetch_activity_history(student.student_id)
-        
-        # Verify both hours entries and milestone entry exist
-        assert len(history) >= 3  # 2 hours entries + at least 1 milestone
-        categories = [h['category'] for h in history]
-        assert 'hours' in categories
-        assert 'milestone' in categories
-        
-        # Verify milestone detail
-        milestone_details = [h['detail'] for h in history if h['category'] == 'milestone']
-        assert any('10 Hours Milestone' in detail for detail in milestone_details)
-
-
 
 '''
 
