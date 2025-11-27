@@ -269,3 +269,138 @@ class StudentIntegrationTests(unittest.TestCase):
         assert 'zara' in names and 'omar' in names and 'leon' in names
         # assert relative ordering: zara (10) > omar (5) > leon (1)
         assert names.index('zara') < names.index('omar') < names.index('leon')
+
+
+'''
+
+   Unit Edge Case Tests
+
+'''
+
+class StudentEdgeCaseTests(unittest.TestCase):
+    #Duplicate Student Enteries
+    def test_duplicate_student_creation(self):
+        student1 = Student.create_student("alex", "alex@gmail.com", "alexpass")
+        student2 = Student.create_student("alex", "alex@gmail.com", "alexpass")
+        self.assertIsNotNone(student1)
+        self.assertIsNone(student2)
+
+
+    #Empty Student Data
+    def test_empty_student_creation(self):
+        student1 = Student.create_student("", "teststudent@mail.com", "teststudetpass")
+        student2 = Student.create_student("teststudent", "", "teststudentpass")
+        student3 = Student.create_student("teststudent", "teststudent@mail.com", "")
+        self.assertIsNone(student1)
+        self.assertIsNone(student2)
+        self.assertIsNone(student3) 
+
+
+        #Invalid Hours Requested
+    def test_invalid_hours_requested(self):
+        student = Student.create_student("sara", "sara@mail.com", "sarapass")
+        req1 = student.request_hours_confirmation(-5)
+        req2 = student.request_hours_confirmation(0)
+        #req3 = student.request_hours_confirmation("five")
+
+        self.assertIsNone(req1)
+        self.assertIsNone(req2)
+        #self.assertIsNone(req3)
+
+class StaffEdgeCaseTests(unittest.TestCase):
+    #Duplicate Staff Enteries
+    def test_duplicate_staff_creation(self):
+        staff1 = Staff.create_staff("alexio","alexio@mail.com","alexiopass")
+        staff2 = Staff.create_staff("alexio","alexio@mail.com","alexiopass")
+        self.assertIsNotNone(staff1)
+        self.assertIsNone(staff2)
+
+
+    #Empty Staff Data
+    def test_empty_staff_creation(self):
+        staff1 = Staff.create_staff("","teststaff@mail.com","teststaffpass")
+        staff2 = Staff.create_staff("testStaff","","teststaffpass")
+        staff3 = Staff.create_staff("testStaff","teststaff@mail.com","")
+        self.assertIsNone(staff1)
+        self.assertIsNone(staff2)
+        self.assertIsNone(staff3)
+
+    
+    #Approve already processed request
+    def test_already_approved_request(self):
+        staff = Staff.create_staff("mike","mike@mail.com","mikepass")
+        student = Student.create_student("linda","linda@mail.com","lindapass")
+        
+        req = Request(student_id=student.student_id, hours=4, status='pending')
+        db.session.add(req)
+        db.session.commit()
+
+        #First Approval
+        logged1 = staff.approve_request(req)
+        #Second Approval Attempt
+        logged2 = staff.approve_request(req)
+        self.assertIsNotNone(logged1)
+        self.assertIsNone(logged2)
+
+    
+    #already denied request 
+    def test_already_denied_request(self):
+        staff = Staff.create_staff("anna","anna@mail.com","annapass")
+        student = Student.create_student("tom","tom@mail.com","tompass")
+        
+        req = Request(student_id=student.student_id, hours=3, status='pending')
+        db.session.add(req)
+        db.session.commit()
+
+        #first denial
+        denial1=staff.deny_request(req)
+        #second denial
+        denial2=staff.deny_request(req)
+        
+        self.assertTrue(denial1)
+        self.assertFalse(denial2)
+
+    
+    #invalid staff ID
+    def test_process_request_invalid_staffID(self):
+        student = Student.create_student("luke","luke@mail.com","lukepass")
+
+        req = Request(student_id=student.student_id, hours=2,status='pending')
+        db.session.add(req)
+        db.session.commit()
+
+        invalid_staff_id = 9999 #9999 does not exist
+
+        with self.assertRaises(ValueError) as context:
+            process_request_approval(invalid_staff_id, req.id)
+            self.assertIn("Staff with id", str(context.exception))
+            process_request_denial(invalid_staff_id,req.id)
+            self.assertIn("Staff with id", str(context.exception))
+
+
+    #Approving none-existent/ invalid request ID
+    def test_approve_invalid_request(self):
+        staff = Staff.create_staff("sarah","sarahmail@mail.com","sarahpass")
+        #staff.approve_request(None)
+        invalid_request_id = 999 #999 does not exist
+
+        with self.assertRaises(ValueError) as context:
+            process_request_approval(staff.staff_id, invalid_request_id)
+            self.assertIn("Request with id", str(context.exception))
+            process_request_denial(staff.staff_id, invalid_request_id)
+            self.assertIn("request with id", str(context.exception))
+
+
+'''    #Invalid Student ID for Request
+    def test_invalid_student_id_request(self):
+        #student = Student.create_student("sara", "sara@mail.com", "sarapass")
+        req = Student.request_hours_confirmation(999, 5) #999 is an invalid ID
+        
+        self.assertIsNone(req)
+'''
+
+
+        
+        
+
+    
