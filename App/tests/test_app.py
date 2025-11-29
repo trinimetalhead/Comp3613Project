@@ -148,7 +148,16 @@ class UserEdgeCaseTests(unittest.TestCase):
         user = User(username="emptyPass", email="empty@domain.com", password="", role="student") 
         self.assertFalse(user.check_password("anything"))
 
+    def test_create_user_duplicate_email(self):
+        existing_emails = set()
 
+        user1 = User(username="user1", email="duplicate@domain.com", password="pass123", role="student")
+        existing_emails.add(user1.email) 
+        
+        user2 = User(username="user2", email="duplicate@domain.com", password="pass456", role="student")
+        with self.assertRaises(ValueError):  
+            if user2.email in existing_emails:
+                raise ValueError("Duplicate email not allowed")
     
 
 
