@@ -126,8 +126,9 @@ def requestHours():
         hours = float(input("Enter the number of hours to request: "))
     
         req = create_hours_request(student_id,hours)
-        print(f"Requested {hours} hours for confirmation.\n")
-        print(f"Request ID: {req.id}, Status: {req.status}")
+        if req:
+            print(f"Requested {hours} hours for confirmation.\n")
+            print(f"Request ID: {req.id}, Status: {req.status}")
 
     except ValueError as e:
         print(f"Error: {e}")
@@ -355,7 +356,9 @@ def user_tests_command(type):
     if type == "unit":
         sys.exit(pytest.main(["-k", "UserUnitTests or StudentUnitTests or StaffUnitTests or RequestUnitTests or LoggedHoursUnitTests"]))
     elif type == "int":
-        sys.exit(pytest.main(["-k", "UserIntegrationTests or StudentIntegrationTests or StaffIntegrationTests "]))
+        sys.exit(pytest.main(["-k", "UserIntegrationTests or StudentIntegrationTests or StaffIntegrationTests"]))
+    elif type == "edge":
+        sys.exit(pytest.main(["-k", "StudentEdgeCaseTests or StaffEdgeCaseTests"]))
     else:
         sys.exit(pytest.main(["-k", "App"]))
 

@@ -1,5 +1,6 @@
 from App.database import db
 from .user import User
+from sqlalchemy.exc import IntegrityError
 
 class Staff(User):
 
@@ -30,11 +31,21 @@ class Staff(User):
     
     # Method to create a new staff member
     def create_staff(username, email, password):
-        newstaff = Staff(username=username, email=email, password=password)
-        db.session.add(newstaff)
-        db.session.commit()
-        return newstaff
-    
+        if not username or not username.strip():
+            return print("Username cannot be empty")
+        if not email or not email.strip():
+            return print("Email cannot be empty")
+        if not password or not password.strip():
+            return print("Password cannot be empty")
+        try:
+            newstaff = Staff(username=username, email=email, password=password)
+            db.session.add(newstaff)
+            db.session.commit()
+            return newstaff
+        except IntegrityError:
+            db.session.rollback()
+            return None    
+
     # Method for staff to approve or deny requests
     def approve_request(self, request):
         from App.models import LoggedHours
