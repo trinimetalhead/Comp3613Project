@@ -324,7 +324,7 @@ class StudentIntegrationTests(unittest.TestCase):
         assert names.index('zara') < names.index('omar') < names.index('leon')
 
     def test_no_accolades_below_first_milestone(self):
-       #Logging hours does NOT trigger any accolades if below the first milestone
+        """Logging hours does NOT trigger any accolades if below the first milestone"""
        # Clean any previous test data
         LoggedHours.query.delete()
         Student.query.delete()
