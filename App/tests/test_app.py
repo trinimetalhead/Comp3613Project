@@ -376,7 +376,42 @@ class StudentIntegrationTests(unittest.TestCase):
         assert student1_requests[0].student_id == student1.student_id
         assert student1_requests[0].hours == 10.0
 
+    def test_student_with_zero_hours_in_leaderboard(self):
+        # Clean previous data
+        LoggedHours.query.delete()
+        Student.query.delete()
+        Staff.query.delete()  
+        db.session.commit()
 
+        # Create students
+        student1 = Student.create_student("active", "active@example.com", "pass")
+        student2 = Student.create_student("inactive", "inactive@example.com", "pass")
+
+        # Create a staff member for the staff_id
+        staff = Staff("dummy_staff", "staff@example.com", "pass")
+        db.session.add(staff)
+        db.session.commit()
+
+       # Add approved hours only for student1
+        db.session.add(LoggedHours(
+          student_id=student1.student_id, 
+          staff_id=staff.staff_id,  # Add staff_id
+          hours=10.0, 
+          status='approved'
+        ))
+        db.session.commit()
+
+        # Generate leaderboard
+        leaderboard = generate_leaderboard()
+
+        # Check both students appear
+        names = [entry['name'] for entry in leaderboard]
+        totals = {entry['name']: entry['hours'] for entry in leaderboard}
+
+        assert "active" in names
+        assert "inactive" in names
+        assert totals["active"] == 10.0
+        assert totals["inactive"] == 0.0  # zero hours
 
 '''
 
