@@ -223,7 +223,6 @@ class StaffIntegrationTests(unittest.TestCase):
 
     def test_batch_approval_multiple_requests(self):
         #Staff approves multiple requests for the same student sequentially"""
-       
         # Clean previous data
         LoggedHours.query.delete()
         Request.query.delete()
@@ -260,6 +259,7 @@ class StaffIntegrationTests(unittest.TestCase):
         # Verify total approved hours
         name, total = get_approved_hours(student.student_id)
         assert total == 3.0 + 4.5 + 2.0
+
 
 
 class StudentIntegrationTests(unittest.TestCase):
@@ -352,30 +352,6 @@ class StudentIntegrationTests(unittest.TestCase):
         # Should be EMPTY - NO accolades triggered
         assert accolades == []
 
-    def test_fetch_only_own_requests(self):
-        # Clean previous data
-        Student.query.delete()
-        Staff.query.delete() 
-        db.session.commit()
-
-        # Create students
-        student1 = Student.create_student("alice", "alice@example.com", "pass")
-        student2 = Student.create_student("bob", "bob@example.com", "pass")
-
-        # Create requests
-        req1 = student1.request_hours_confirmation(10.0)
-        req2 = student2.request_hours_confirmation(5.0)
-        db.session.add_all([req1, req2])
-        db.session.commit()
-
-        # Fetch only student1's requests
-        student1_requests = fetch_requests(student1.student_id)
-
-        # Assertions
-        assert len(student1_requests) == 1
-        assert student1_requests[0].student_id == student1.student_id
-        assert student1_requests[0].hours == 10.0
-
     def test_student_with_zero_hours_in_leaderboard(self):
         # Clean previous data
         LoggedHours.query.delete()
@@ -412,6 +388,31 @@ class StudentIntegrationTests(unittest.TestCase):
         assert "inactive" in names
         assert totals["active"] == 10.0
         assert totals["inactive"] == 0.0  # zero hours
+
+    def test_fetch_only_own_requests(self):
+       # Clean previous data
+       Request.query.delete()
+       Student.query.delete()
+       db.session.commit()
+
+       # Create students
+       student1 = Student.create_student("alice", "alice@example.com", "pass")
+       student2 = Student.create_student("bob", "bob@example.com", "pass")
+
+       # Create requests
+       req1 = student1.request_hours_confirmation(10.0)
+       req2 = student2.request_hours_confirmation(5.0)
+       db.session.add_all([req1, req2])
+       db.session.commit()
+
+       # Fetch only student1's requests
+       student1_requests = fetch_requests(student1.student_id)
+
+       # Assertions
+       assert len(student1_requests) == 1
+       assert student1_requests[0].student_id == student1.student_id
+       assert student1_requests[0].hours == 10.0
+   
 
 '''
 
