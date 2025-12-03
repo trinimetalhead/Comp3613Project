@@ -49,7 +49,7 @@ class Student(User, Subject):
             return newstudent
         except IntegrityError:
             db.session.rollback()
-            return None
+            raise ValueError("Duplicate student")
 
     # Method for student to request hours
     def request_hours_confirmation(self, hours):
